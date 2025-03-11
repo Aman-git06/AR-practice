@@ -1,87 +1,113 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>Marker-based AR with Model Switching</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-        .controls {
+        #arrows {
+            display: none;
             position: fixed;
             bottom: 20px;
-            width: 100%;
-            text-align: center;
-            z-index: 999;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        button {
-            padding: 10px 20px;
-            margin: 0 10px;
-            background: rgba(0,0,0,0.5);
-            color: white;
+        .arrow-btn {
+            font-size: 24px;
+            margin: 0 15px;
+            padding: 5px 15px;
             border: none;
             border-radius: 5px;
+            background: #007bff;
+            color: white;
             cursor: pointer;
+            transition: background 0.3s;
+        }
+        .arrow-btn:hover {
+            background: #0056b3;
         }
     </style>
 </head>
-<body>
-    <a-scene vr-mode-ui="enabled: false" arjs="sourceType: webcam; debugUIEnabled: false">
+<body style="margin: 0; overflow: hidden;">
+    <!-- AR Scene -->
+    <a-scene embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
         <a-marker preset="hiro">
-            <a-entity id="active-media"></a-entity>
+            <!-- Switchable 3D Model -->
+            <a-entity id="model" geometry="primitive: box" material="color: tomato" 
+                     position="0 0.5 0" rotation="0 45 0" scale="1 1 1">
+                <a-animation attribute="rotation"
+                            dur="3000"
+                            to="0 405 0"
+                            easing="linear"
+                            repeat="indefinite"></a-animation>
+            </a-entity>
         </a-marker>
         <a-entity camera></a-entity>
     </a-scene>
 
-    <div class="controls">
-        <button onclick="changeMedia(-1)">Previous</button>
-        <button onclick="changeMedia(1)">Next</button>
+    <!-- Model Switching Arrows -->
+    <div id="arrows">
+        <button class="arrow-btn" id="leftArrow">←</button>
+        <button class="arrow-btn" id="rightArrow">→</button>
+    </div>
+
+    <!-- Instructions -->
+    <div style="position: fixed; top: 20px; left: 20px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px;">
+        <h3>Instructions:</h3>
+        <p>1. Print the Hiro marker from <a href="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png" target="_blank">here</a></p>
+        <p>2. Point your camera at the marker</p>
+        <p>3. Use arrows to switch models</p>
     </div>
 
     <script>
-        const mediaList = [
-            { type: 'image', src: 'image1.jpg' },
-            { type: 'video', src: 'video1.mp4' },
-            { type: 'image', src: 'image2.jpg' }
-        ];
-
-        let currentIndex = 0;
-        const activeMedia = document.getElementById('active-media');
-
-        function updateMedia() {
-            const media = mediaList[currentIndex];
-            activeMedia.innerHTML = '';
+        document.addEventListener('DOMContentLoaded', () => {
+            const marker = document.querySelector('a-marker');
+            const arrows = document.getElementById('arrows');
+            const modelEntity = document.querySelector('#model');
             
-            if(media.type === 'image') {
-                activeMedia.setAttribute('material', {
-                    src: media.src,
-                    transparent: true
-                });
-                activeMedia.setAttribute('geometry', 'primitive: plane; width: 1; height: 1');
-            } else if(media.type === 'video') {
-                const video = document.createElement('video');
-                video.src = media.src;
-                video.setAttribute('playsinline', '');
-                video.crossOrigin = 'anonymous';
-                video.loop = true;
-                
-                // Handle video autoplay
-                video.play().catch(error => {
-                    console.log('Video play requires user interaction');
-                });
+            // Define available models
+            const models = [
+                { primitive: 'box', color: 'tomato', scale: '1 1 1' },
+                { primitive: 'sphere', color: '#00b4d8', scale: '0.5 0.5 0.5' },
+                { primitive: 'cylinder', color: '#2a9d8f', 
+                  radius: 0.5, height: 1, scale: '1 1 1' },
+                { primitive: 'cone', color: '#e76f51', 
+                  radiusBottom: 0.5, height: 1, scale: '1 1 1' }
+            ];
+            let currentModelIndex = 0;
 
-                activeMedia.setAttribute('material', {
-                    src: video,
-                    transparent: true
+            // Show/hide arrows based on marker detection
+            marker.addEventListener('markerFound', () => arrows.style.display = 'block');
+            marker.addEventListener('markerLost', () => arrows.style.display = 'none');
+
+            // Model switching function
+            function updateModel() {
+                const model = models[currentModelIndex];
+                modelEntity.setAttribute('geometry', {
+                    primitive: model.primitive,
+                    radius: model.radius,
+                    height: model.height,
+                    radiusBottom: model.radiusBottom
                 });
-                activeMedia.setAttribute('geometry', 'primitive: plane; width: 1; height: 0.5625');
+                modelEntity.setAttribute('material', 'color', model.color);
+                modelEntity.setAttribute('scale', model.scale);
             }
-        }
 
-        function changeMedia(direction) {
-            currentIndex = (currentIndex + direction + mediaList.length) % mediaList.length;
-            updateMedia();
-        }
+            // Arrow click handlers
+            document.getElementById('leftArrow').addEventListener('click', () => {
+                currentModelIndex = (currentModelIndex - 1 + models.length) % models.length;
+                updateModel();
+            });
 
-        // Initial load
-        updateMedia();
+            document.getElementById('rightArrow').addEventListener('click', () => {
+                currentModelIndex = (currentModelIndex + 1) % models.length;
+                updateModel();
+            });
+        });
     </script>
 </body>
 </html>
