@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Marker-based AR with Model Switching</title>
+    <title>Marker-based AR with Media Switching</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
+        /* (Keep the same arrow styles as original) */
         #arrows {
             display: none;
             position: fixed;
@@ -35,20 +36,13 @@
 <body style="margin: 0; overflow: hidden;">
     <!-- AR Scene -->
     <a-scene embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
-        <a-marker preset="hiro">
-            <!-- Switchable 3D Model -->
-            <a-entity id="model" geometry="primitive: box" material="color: tomato" 
-                     position="0 0.5 0" rotation="0 45 0" scale="1 1 1">
-                <a-animation attribute="rotation"
-                            dur="3000"
-                            to="0 405 0"
-                            easing="linear"
-                            repeat="indefinite"></a-animation>
-            </a-entity>
+        <a-marker preset="hiro" id="marker">
+            <!-- Media will be inserted here dynamically -->
         </a-marker>
         <a-entity camera></a-entity>
     </a-scene>
 
+    <!-- (Keep the same arrows and instructions structure) -->
     <!-- Model Switching Arrows -->
     <div id="arrows">
         <button class="arrow-btn" id="leftArrow">←</button>
@@ -63,49 +57,81 @@
         <p>3. Use arrows to switch models</p>
     </div>
 
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const marker = document.querySelector('a-marker');
             const arrows = document.getElementById('arrows');
-            const modelEntity = document.querySelector('#model');
             
-            // Define available models
-            const models = [
-                { primitive: 'box', color: 'tomato', scale: '1 1 1' },
-                { primitive: 'sphere', color: '#00b4d8', scale: '0.5 0.5 0.5' },
-                { primitive: 'cylinder', color: '#2a9d8f', 
-                  radius: 0.5, height: 1, scale: '1 1 1' },
-                { primitive: 'cone', color: '#e76f51', 
-                  radiusBottom: 0.5, height: 1, scale: '1 1 1' }
+            // Define available media
+            const media = [
+                {
+                    type: 'image',
+                    src: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/Picture_icon_BLACK.svg',
+                    width: 1,
+                    height: 1
+                },
+                {
+                    type: 'video',
+                    src: 'https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/videos/sintel.mp4',
+                    width: 1.78,
+                    height: 1
+                },
+                {
+                    type: 'image',
+                    src: 'https://upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg',
+                    width: 1.5,
+                    height: 1
+                }
             ];
-            let currentModelIndex = 0;
+            let currentMediaIndex = 0;
 
             // Show/hide arrows based on marker detection
             marker.addEventListener('markerFound', () => arrows.style.display = 'block');
             marker.addEventListener('markerLost', () => arrows.style.display = 'none');
 
-            // Model switching function
-            function updateModel() {
-                const model = models[currentModelIndex];
-                modelEntity.setAttribute('geometry', {
-                    primitive: model.primitive,
-                    radius: model.radius,
-                    height: model.height,
-                    radiusBottom: model.radiusBottom
-                });
-                modelEntity.setAttribute('material', 'color', model.color);
-                modelEntity.setAttribute('scale', model.scale);
+            // Media switching function
+            function updateMedia() {
+                // Clear previous media
+                while (marker.firstChild) {
+                    marker.removeChild(marker.firstChild);
+                }
+
+                const mediaItem = media[currentMediaIndex];
+                let entity;
+
+                if (mediaItem.type === 'image') {
+                    entity = document.createElement('a-image');
+                    entity.setAttribute('src', mediaItem.src);
+                } else if (mediaItem.type === 'video') {
+                    entity = document.createElement('a-video');
+                    entity.setAttribute('src', mediaItem.src);
+                    entity.setAttribute('autoplay', 'true');
+                    entity.setAttribute('loop', 'true');
+                }
+
+                // Common attributes
+                entity.setAttribute('width', mediaItem.width);
+                entity.setAttribute('height', mediaItem.height);
+                entity.setAttribute('position', '0 0.5 0');
+                entity.setAttribute('rotation', '-90 0 0');
+                entity.setAttribute('class', 'media-content');
+
+                marker.appendChild(entity);
             }
+
+            // Initial media load
+            updateMedia();
 
             // Arrow click handlers
             document.getElementById('leftArrow').addEventListener('click', () => {
-                currentModelIndex = (currentModelIndex - 1 + models.length) % models.length;
-                updateModel();
+                currentMediaIndex = (currentMediaIndex - 1 + media.length) % media.length;
+                updateMedia();
             });
 
             document.getElementById('rightArrow').addEventListener('click', () => {
-                currentModelIndex = (currentModelIndex + 1) % models.length;
-                updateModel();
+                currentMediaIndex = (currentMediaIndex + 1) % media.length;
+                updateMedia();
             });
         });
     </script>
