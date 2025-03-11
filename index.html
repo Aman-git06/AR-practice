@@ -10,6 +10,7 @@
             width: 100%;
             text-align: center;
             z-index: 999;
+            display: none; /* Hidden until marker is detected */
         }
         button {
             padding: 10px 20px;
@@ -24,13 +25,13 @@
 </head>
 <body>
     <a-scene vr-mode-ui="enabled: false" arjs="sourceType: webcam; debugUIEnabled: false">
-        <a-marker preset="hiro">
+        <a-marker preset="hiro" id="marker">
             <a-entity id="active-media"></a-entity>
         </a-marker>
         <a-entity camera></a-entity>
     </a-scene>
 
-    <div class="controls">
+    <div class="controls" id="controls">
         <button onclick="changeMedia(-1)">Previous</button>
         <button onclick="changeMedia(1)">Next</button>
     </div>
@@ -44,6 +45,8 @@
 
         let currentIndex = 0;
         const activeMedia = document.getElementById('active-media');
+        const controls = document.getElementById('controls');
+        const marker = document.getElementById('marker');
 
         function updateMedia() {
             const media = mediaList[currentIndex];
@@ -62,7 +65,6 @@
                 video.crossOrigin = 'anonymous';
                 video.loop = true;
                 
-                // Handle video autoplay
                 video.play().catch(error => {
                     console.log('Video play requires user interaction');
                 });
@@ -80,8 +82,17 @@
             updateMedia();
         }
 
-        // Initial load
-        updateMedia();
+        marker.addEventListener('markerFound', () => {
+            console.log('Marker found');
+            controls.style.display = 'block';
+            updateMedia();
+        });
+
+        marker.addEventListener('markerLost', () => {
+            console.log('Marker lost');
+            controls.style.display = 'none';
+            activeMedia.innerHTML = ''; // Clear media when marker is lost
+        });
     </script>
 </body>
 </html>
