@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Marker-based AR with Media Switching & Zoom</title>
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
         /* Keep existing arrow styles */
@@ -40,29 +40,9 @@
     </style>
 </head>
 <body style="margin: 0; overflow: hidden;">
-    <!-- Camera Permission UI -->
-    <div id="permission-ui" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; text-align: center; z-index: 9999;">
-        <h2>Camera Permission Required</h2>
-        <p>This AR experience needs access to your camera.</p>
-        <button onclick="requestCamera()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Allow Camera Access</button>
-    </div>
-
     <!-- AR Scene -->
-    <a-scene 
-        embedded 
-        arjs="sourceType: webcam; 
-              debugUIEnabled: false; 
-              detectionMode: mono_and_matrix; 
-              matrixCodeType: 3x3;
-              sourceWidth: 1280;
-              sourceHeight: 960;
-              displayWidth: 1280;
-              displayHeight: 960;"
-        vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true;"
-        inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js">
-        
-        <a-marker preset="hiro" id="marker" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="5">
+    <a-scene embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+        <a-marker preset="hiro" id="marker">
             <!-- Media will be inserted here dynamically -->
         </a-marker>
         <a-entity camera></a-entity>
@@ -86,25 +66,6 @@
 
 
     <script>
-        // Camera permission handling
-        const permissionUI = document.getElementById('permission-ui');
-        
-        async function requestCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                permissionUI.style.display = 'none';
-                stream.getTracks().forEach(track => track.stop()); // Stop the test stream
-            } catch (error) {
-                console.error('Camera permission denied:', error);
-                alert('Camera access is required for AR functionality. Please allow camera access and reload the page.');
-            }
-        }
-
-        // Check if running on HTTPS
-        if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-            alert('AR.js requires HTTPS to access the camera. Please serve this page over HTTPS.');
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             const marker = document.querySelector('a-marker');
             const arrows = document.getElementById('arrows');
@@ -225,18 +186,6 @@
 
             // Initial media load
             updateMedia();
-        });
-
-        // Add marker detection feedback
-        const marker = document.querySelector('a-marker');
-        marker.addEventListener('markerFound', () => {
-            console.log('Marker detected');
-            document.getElementById('arrows').style.display = 'block';
-        });
-
-        marker.addEventListener('markerLost', () => {
-            console.log('Marker lost');
-            document.getElementById('arrows').style.display = 'none';
         });
     </script>
 </body>
