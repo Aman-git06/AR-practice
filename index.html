@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Marker-based AR with Media Switching & Zoom</title>
+    <title>Marker-based AR with Media Switching</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-        /* Keep existing arrow styles */
+        /* (Keep the same arrow styles as original) */
         #arrows {
             display: none;
             position: fixed;
@@ -31,12 +31,6 @@
         .arrow-btn:hover {
             background: #0056b3;
         }
-        
-        .media-content {
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
     </style>
 </head>
 <body style="margin: 0; overflow: hidden;">
@@ -48,9 +42,8 @@
         <a-entity camera></a-entity>
     </a-scene>
 
-    <!-- Keep existing arrows and instructions structure -->
-    <!-- ... -->
-      <!-- Model Switching Arrows -->
+    <!-- (Keep the same arrows and instructions structure) -->
+    <!-- Model Switching Arrows -->
     <div id="arrows">
         <button class="arrow-btn" id="leftArrow">←</button>
         <button class="arrow-btn" id="rightArrow">→</button>
@@ -91,52 +84,13 @@
                     height: 1
                 }
             ];
-            
             let currentMediaIndex = 0;
-            let isPinching = false;
-            let initialDistance = null;
-            let currentScale = 1;
-            const minScale = 0.5;
-            const maxScale = 3;
 
-            // Add pinch-zoom functionality
-            function handleTouchStart(e) {
-                if (e.touches.length === 2) {
-                    isPinching = true;
-                    initialDistance = getDistanceBetweenTouches(e.touches);
-                    const mediaEntity = document.querySelector('.media-content');
-                    currentScale = mediaEntity.getAttribute('scale').x;
-                }
-            }
+            // Show/hide arrows based on marker detection
+            marker.addEventListener('markerFound', () => arrows.style.display = 'block');
+            marker.addEventListener('markerLost', () => arrows.style.display = 'none');
 
-            function handleTouchMove(e) {
-                if (!isPinching || e.touches.length !== 2) return;
-                
-                e.preventDefault();
-                const mediaEntity = document.querySelector('.media-content');
-                const newDistance = getDistanceBetweenTouches(e.touches);
-                const scaleFactor = newDistance / initialDistance;
-                
-                let newScale = currentScale * scaleFactor;
-                newScale = Math.max(minScale, Math.min(maxScale, newScale));
-                
-                mediaEntity.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
-            }
-
-            function handleTouchEnd() {
-                isPinching = false;
-                initialDistance = null;
-            }
-
-            function getDistanceBetweenTouches(touches) {
-                const [t1, t2] = touches;
-                return Math.hypot(
-                    t2.clientX - t1.clientX,
-                    t2.clientY - t1.clientY
-                );
-            }
-
-            // Modified updateMedia function with touch events
+            // Media switching function
             function updateMedia() {
                 // Clear previous media
                 while (marker.firstChild) {
@@ -161,19 +115,15 @@
                 entity.setAttribute('height', mediaItem.height);
                 entity.setAttribute('position', '0 0.5 0');
                 entity.setAttribute('rotation', '-90 0 0');
-                entity.setAttribute('scale', '1 1 1');
                 entity.setAttribute('class', 'media-content');
-
-                // Add touch event listeners
-                entity.addEventListener('touchstart', handleTouchStart);
-                entity.addEventListener('touchmove', handleTouchMove);
-                entity.addEventListener('touchend', handleTouchEnd);
-                entity.addEventListener('touchcancel', handleTouchEnd);
 
                 marker.appendChild(entity);
             }
 
-            // Keep existing marker detection and arrow handlers
+            // Initial media load
+            updateMedia();
+
+            // Arrow click handlers
             document.getElementById('leftArrow').addEventListener('click', () => {
                 currentMediaIndex = (currentMediaIndex - 1 + media.length) % media.length;
                 updateMedia();
@@ -183,9 +133,6 @@
                 currentMediaIndex = (currentMediaIndex + 1) % media.length;
                 updateMedia();
             });
-
-            // Initial media load
-            updateMedia();
         });
     </script>
 </body>
